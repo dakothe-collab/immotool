@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Immobilienrenditerechner</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(160deg,#070f1a 0%,#0a1828 50%,#0c1e30 100%);font-family:'DM Sans',sans-serif;color:#e8f4fd;min-height:100vh}
+input[type=range]{-webkit-appearance:none;appearance:none;background:rgba(255,255,255,0.08);border-radius:2px;outline:none;height:4px;width:100%;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#4fc3f7;cursor:pointer;box-shadow:0 0 8px rgba(79,195,247,0.4)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#4fc3f7;cursor:pointer;border:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1e3347;border-radius:2px}
+#header{background:linear-gradient(90deg,#0d2137 0%,#0a1828 100%);border-bottom:1px solid rgba(79,195,247,0.15);padding:18px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+#header h1{font-family:'DM Serif Display',serif;font-size:20px;color:#e8f4fd;font-weight:400}
+#header h1 span{color:#4fc3f7}
+#header p{font-size:11px;color:#5a6e82;letter-spacing:0.06em;margin-top:2px}
+#score-badge{margin-left:auto;text-align:center;background:rgba(255,255,255,0.03);border:2px solid #4ade80;border-radius:12px;padding:8px 18px;box-shadow:0 0 20px rgba(74,222,128,0.2);transition:all 0.3s}
+#score-num{font-size:26px;font-weight:700;font-family:'DM Serif Display',serif;line-height:1}
+#score-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-top:2px}
+#layout{display:flex;max-width:1500px;margin:0 auto}
+#sidebar{width:360px;flex-shrink:0;padding:22px 18px;border-right:1px solid rgba(255,255,255,0.05);overflow-y:auto;max-height:calc(100vh - 70px);position:sticky;top:70px}
+#main{flex:1;overflow-y:auto;max-height:calc(100vh - 70px)}
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:default;user-select:none}
+.section-header.collapsible{cursor:pointer}
+.section-header h3{font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:#4fc3f7;font-weight:600}
+.section-header .arrow{margin-left:auto;color:#5a6e82;font-size:12px}
+.section-body{margin-bottom:28px}
+.slider-wrap{margin-bottom:18px}
+.slider-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px}
+.slider-label{font-size:12px;color:#8a9bb0;letter-spacing:0.06em;text-transform:uppercase;flex-shrink:0}
+.slider-val{font-size:17px;font-weight:700;color:#e8f4fd;font-family:'DM Serif Display',serif;cursor:text;border-bottom:1px dashed #2a4a62;padding-bottom:1px;white-space:nowrap}
+.slider-val:hover{color:#4fc3f7}
+.slider-val-input{width:110px;background:#0d2137;border:1px solid #4fc3f7;border-radius:6px;color:#e8f4fd;font-size:15px;font-family:'DM Serif Display',serif;font-weight:700;padding:3px 8px;outline:none;text-align:right}
+.slider-controls{display:flex;align-items:center;gap:6px}
+.step-btn{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:5px;color:#8a9bb0;width:24px;height:24px;cursor:pointer;font-size:14px;flex-shrink:0;line-height:1;display:flex;align-items:center;justify-content:center}
+.step-btn:hover{background:rgba(255,255,255,0.12);color:#e8f4fd}
+.hint{font-size:11px;color:#5a6e82;margin:3px 0 0 0}
+.toggle-wrap{display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:14px}
+.toggle-track{width:40px;height:22px;border-radius:11px;position:relative;background:#1e3347;transition:background 0.2s;border:1px solid rgba(255,255,255,0.1);flex-shrink:0}
+.toggle-track.on{background:#4fc3f7}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#4a5568;transition:left 0.2s}
+.toggle-track.on .toggle-thumb{left:19px;background:#0d2137}
+.toggle-label{font-size:13px;color:#8a9bb0}
+#tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.25);padding:0 24px}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:#5a6e82;cursor:pointer;padding:13px 18px;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:400;letter-spacing:0.04em;transition:all 0.2s}
+.tab-btn.active{border-bottom-color:#4fc3f7;color:#4fc3f7;font-weight:600}
+#tab-content{padding:24px 26px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;margin-bottom:24px}
+.kpi-card{border-radius:12px;padding:16px 20px}
+.kpi-label{font-size:11px;color:#8a9bb0;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px}
+.kpi-val{font-weight:700;font-family:'DM Serif Display',serif}
+.kpi-sub{font-size:11px;color:#5a6e82;margin-top:4px}
+.card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:18px;margin-bottom:18px}
+.card h4{font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#4fc3f7;margin-bottom:12px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.row-label{font-size:13px;color:#6b7e8f}
+.row-label.bold{color:#c8dce8}
+.row-val{font-size:14px;font-weight:500;color:#9ab0c4;font-family:'DM Serif Display',serif;text-align:right}
+.row-val.bold{font-weight:700;color:#e8f4fd}
+.row-sub{font-size:11px;color:#5a6e82;text-align:right}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.plz-box{margin-bottom:20px;background:rgba(79,195,247,0.06);border:1px solid rgba(79,195,247,0.2);border-radius:10px;padding:12px 14px}
+.plz-box-label{font-size:11px;color:#8a9bb0;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
+.plz-inner{display:flex;gap:8px;align-items:center}
+#plz-input{flex:1;background:#0d2137;border:1px solid #2a4a62;border-radius:6px;color:#e8f4fd;font-size:16px;font-family:'DM Serif Display',serif;font-weight:700;padding:5px 10px;outline:none}
+#plz-input:focus{border-color:#4fc3f7}
+.plz-name{font-size:11px;font-weight:600;max-width:120px;text-align:right;line-height:1.3}
+.plz-typ{color:#5a6e82;font-weight:400}
+.score-panel{background:linear-gradient(135deg,#0d2137 0%,#071320 100%);border-radius:16px;padding:22px;margin-bottom:22px}
+.score-circle{text-align:center;border-radius:50%;width:72px;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+.score-circle-num{font-size:28px;font-weight:700;font-family:'DM Serif Display',serif;line-height:1}
+.score-bar-bg{height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;margin-bottom:6px}
+.score-bar-fill{height:100%;background:linear-gradient(90deg,#f87171,#facc15 45%,#4ade80);border-radius:4px;transition:width 0.5s ease}
+.criteria-card{border-radius:12px;padding:16px;margin-bottom:14px}
+.crit-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.crit-val{font-size:18px;font-weight:700;font-family:'DM Serif Display',serif}
+.crit-pts{font-size:13px;font-weight:700}
+.pt-bar-bg{height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.pt-bar-fill{height:100%;border-radius:3px;transition:width 0.4s}
+.schwellen{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.schwelle{font-size:10px;padding:2px 8px;border-radius:12px}
+.crit-beurt{font-size:11px;font-weight:600;margin-bottom:4px}
+.crit-erkl{font-size:11px;color:#5a6e82;line-height:1.5}
+.region-header{border-radius:14px;padding:18px;margin-bottom:18px}
+.region-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+.meta-box{background:rgba(0,0,0,0.25);border-radius:8px;padding:8px 12px;min-width:110px}
+.meta-box-label{font-size:10px;color:#5a6e82;margin-bottom:2px}
+.meta-box-val{font-size:13px;font-weight:700;font-family:'DM Serif Display',serif}
+.chart-container{width:100%}
+.yr-bars{display:flex;gap:3px;align-items:flex-end;height:100px}
+.yr-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100px}
+.yr-bar-pct{font-size:9px;font-weight:600;margin-bottom:2px}
+.yr-bar-inner{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:70px;width:100%}
+.yr-bar{width:80%}
+.yr-bar-lbl{font-size:9px;color:#4a5f73;margin-top:2px}
+.market-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.market-item{background:rgba(0,0,0,0.2);border-radius:8px;padding:10px}
+.market-year{font-size:12px;font-weight:600;color:#c8dce8}
+.market-chg{font-size:13px;font-weight:700;font-family:'DM Serif Display',serif}
+.market-text{font-size:11px;color:#6b7e8f;line-height:1.5;margin-top:4px}
+.afa-summary{background:linear-gradient(135deg,#0d2a1f 0%,#0a1828 100%);border:1px solid rgba(74,222,128,0.3);border-radius:14px;padding:18px 22px;margin-bottom:22px;display:flex;gap:28px;flex-wrap:wrap;align-items:center}
+.afa-var-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:24px}
+.afa-var-card{border-radius:14px;padding:16px}
+.afa-var-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.afa-var-para{font-size:11px;color:#5a6e82;font-family:monospace;margin-bottom:8px}
+.afa-var-desc{font-size:11px;color:#6b7e8f;line-height:1.5;margin-bottom:12px}
+.afa-var-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.afa-stat{background:rgba(0,0,0,0.25);border-radius:7px;padding:7px 9px}
+.afa-stat-label{font-size:10px;color:#5a6e82;margin-bottom:2px}
+.afa-stat-val{font-size:13px;font-weight:700;font-family:'DM Serif Display',serif}
+.afa-badge{font-size:10px;border-radius:20px;padding:2px 9px;height:fit-content}
+.legal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.legal-item{background:rgba(0,0,0,0.2);border-radius:8px;padding:11px}
+.legal-para{font-size:10px;color:#4fc3f7;margin-bottom:3px;font-family:monospace}
+.legal-title{font-size:13px;font-weight:600;color:#c8dce8;margin-bottom:5px}
+.legal-text{font-size:11px;color:#6b7e8f;line-height:1.6}
+.cost-items{display:flex;gap:10px;flex-wrap:wrap}
+.cost-item{flex:1 1 140px;background:rgba(0,0,0,0.2);border-radius:10px;padding:11px}
+.cost-item-top{display:flex;justify-content:space-between;margin-bottom:4px}
+.cost-item-val{font-size:17px;font-weight:700;color:#e8f4fd;font-family:'DM Serif Display',serif}
+.bar-bg{height:4px;background:rgba(255,255,255,0.05);border-radius:2px;margin-top:7px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width 0.4s}
+.legend{display:flex;gap:20px;margin-top:6px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#8a9bb0}
+.legend-dot{width:12px;height:6px;border-radius:2px}
+.no-plz{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:32px;text-align:center}
+.gradient-card{background:linear-gradient(135deg,rgba(79,195,247,0.06) 0%,rgba(13,33,55,0.8) 100%);border:1px solid rgba(79,195,247,0.2);border-radius:14px;padding:18px;margin-bottom:18px}
+.disclaimer{font-size:11px;color:#3d5266;line-height:1.6;margin-top:12px}
+.ersparnis-bars{display:flex;gap:10px;flex-wrap:wrap}
+.erspar-bar{flex:1 1 160px;background:rgba(0,0,0,0.2);border-radius:10px;padding:12px}
+.erspar-name{font-size:12px;font-weight:600;margin-bottom:6px}
+.erspar-val{font-size:22px;font-weight:700;color:#4ade80;font-family:'DM Serif Display',serif}
+.erspar-sub{font-size:10px;color:#5a6e82;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <span style="font-size:26px">🏢</span>
+  <div>
+    <h1>Immobilien<span>rendite</span>rechner</h1>
+    <p>KAPITALANLAGE · CASHFLOW · STEUER · LANGFRISTANALYSE</p>
+  </div>
+  <div id="score-badge">
+    <div id="score-num" style="color:#4ade80">—</div>
+    <div id="score-label" style="color:#4ade80">Berechne…</div>
+  </div>
+</div>
+
+<div id="layout">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+
+```
+<!-- Kaufpreis & Nebenkosten -->
+<div class="section-body">
+  <div class="section-header">
+    <span>🏷️</span><h3>Kaufpreis &amp; Nebenkosten</h3>
+  </div>
+  <!-- PLZ -->
+  <div class="plz-box">
+    <div class="plz-box-label">📍 PLZ / Lage</div>
+    <div class="plz-inner">
+      <input id="plz-input" type="text" maxlength="5" placeholder="z.B. 80331" value="51766"/>
+      <div id="plz-name-display" class="plz-name"></div>
+    </div>
+  </div>
+  <div id="sl-kaufpreis"></div>
+  <div id="sl-wohnflaeche"></div>
+  <div id="sl-grunderwerbsteuer"></div>
+  <div id="sl-notar"></div>
+  <div id="sl-makler"></div>
+</div>
+
+<!-- Finanzierung -->
+<div class="section-body">
+  <div class="section-header"><span>🏦</span><h3>Finanzierung</h3></div>
+  <div id="sl-eigenkapital"></div>
+  <div id="sl-zinssatz"></div>
+  <div id="sl-tilgung"></div>
+  <div id="sl-zinsbindung"></div>
+</div>
+
+<!-- Mieteinnahmen -->
+<div class="section-body">
+  <div class="section-header"><span>💰</span><h3>Mieteinnahmen</h3></div>
+  <div id="sl-kaltmiete"></div>
+  <div id="sl-mietausfall"></div>
+  <div id="sl-mietsteigerung"></div>
+</div>
+
+<!-- Bewirtschaftung -->
+<div class="section-body">
+  <div class="section-header collapsible" onclick="toggleSection(this)">
+    <span>🔧</span><h3>Bewirtschaftungskosten</h3><span class="arrow">▼</span>
+  </div>
+  <div class="section-collapse">
+    <div id="sl-verwaltung"></div>
+    <div id="sl-instandhaltung"></div>
+    <div id="sl-nichtumlegbar"></div>
+  </div>
+</div>
+
+<!-- AfA -->
+<div class="section-body">
+  <div class="section-header"><span>📊</span><h3>Abschreibung &amp; Steuer</h3></div>
+  <div id="toggle-neubau"></div>
+  <div id="toggle-qng" style="display:none"></div>
+  <div id="sl-gebaeudeanteil"></div>
+  <div id="sl-steuersatz"></div>
+</div>
+
+<!-- Langfrist -->
+<div class="section-body">
+  <div class="section-header collapsible" onclick="toggleSection(this)">
+    <span>📈</span><h3>Langfrist</h3><span class="arrow">▼</span>
+  </div>
+  <div class="section-collapse">
+    <div id="sl-wertsteigerung"></div>
+    <div id="sl-haltedauer"></div>
+  </div>
+</div>
+```
+
+  </div><!-- /sidebar -->
+
+  <!-- MAIN -->
+
+  <div id="main">
+    <div id="tabs">
+      <button class="tab-btn active" onclick="switchTab('uebersicht',this)">📋 Übersicht</button>
+      <button class="tab-btn" onclick="switchTab('lage',this)">📍 Lage &amp; Score</button>
+      <button class="tab-btn" onclick="switchTab('abschreibung',this)">📊 Abschreibung</button>
+      <button class="tab-btn" onclick="switchTab('kosten',this)">📈 Kostenentwicklung</button>
+    </div>
+    <div id="tab-content">
+      <div id="tab-uebersicht"></div>
+      <div id="tab-lage" style="display:none"></div>
+      <div id="tab-abschreibung" style="display:none"></div>
+      <div id="tab-kosten" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── FORMATIERUNG ────────────────────────────────────────────────────
+const fmtDE = (n,d=0) => new Intl.NumberFormat('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
+const fmtEur = (n,d=0) => new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
+const fmtPct = n => `${fmtDE(n,2)} %`;
+
+// ─── ZUSTAND ─────────────────────────────────────────────────────────
+const S = {
+  kaufpreis:400000, wohnflaeche:80,
+  grunderwerbsteuer:3.5, notarkosten:1.5, maklercourtage:3.57,
+  eigenkapital:100000, zinssatz:3.8, tilgung:2.0, zinsbindung:15,
+  kaltmiete:1400, mietausfallWagnis:4, mietsteigerung:2.0,
+  verwaltungskosten:30, instandhaltung:8, nichtUmlegbar:150,
+  isNeubau:false, isQNG:false,
+  gebaeudewertAnteil:70, steuersatz:42,
+  wertsteigerung:2.0, haltedauer:20,
+  plz:'51766'
+};
+
+// ─── PLZ DATEN ───────────────────────────────────────────────────────
+const PLZ_DATA = {
+  '10':{name:'Berlin Mitte',typ:'A-Stadt',typLabel:'Metropole',color:'#4ade80',preisniveau:'Hoch',mietrenditeTyp:'2,5–3,5%',history:{'2018':4200,'2019':4800,'2020':5400,'2021':6200,'2022':6800,'2023':5900,'2024':6100,'2025':6400},trend:'+3,2%',trendColor:'#4ade80',prognose:'Moderat steigend',leerstand:'Sehr gering',nachfrage:'Sehr hoch',risiko:'Niedrig'},
+  '20':{name:'Hamburg Altstadt',typ:'A-Stadt',typLabel:'Metropole',color:'#4ade80',preisniveau:'Hoch',mietrenditeTyp:'2,8–3,8%',history:{'2018':4800,'2019':5200,'2020':5700,'2021':6300,'2022':7100,'2023':6400,'2024':6700,'2025':6900},trend:'+3,0%',trendColor:'#4ade80',prognose:'Stabil steigend',leerstand:'Sehr gering',nachfrage:'Sehr hoch',risiko:'Niedrig'},
+  '80':{name:'München',typ:'A-Stadt',typLabel:'Metropole',color:'#4ade80',preisniveau:'Sehr hoch',mietrenditeTyp:'2,0–2,8%',history:{'2018':7200,'2019':8100,'2020':8900,'2021':9800,'2022':10200,'2023':9100,'2024':9400,'2025':9700},trend:'+3,2%',trendColor:'#4ade80',prognose:'Stabil steigend',leerstand:'Minimal',nachfrage:'Extrem hoch',risiko:'Sehr niedrig'},
+  '60':{name:'Frankfurt am Main',typ:'A-Stadt',typLabel:'Metropole',color:'#4ade80',preisniveau:'Hoch',mietrenditeTyp:'2,5–3,5%',history:{'2018':5100,'2019':5700,'2020':6200,'2021':6900,'2022':7400,'2023':6500,'2024':6800,'2025':7000},trend:'+2,9%',trendColor:'#4ade80',prognose:'Moderat steigend',leerstand:'Gering',nachfrage:'Sehr hoch',risiko:'Niedrig'},
+  '50':{name:'Köln',typ:'A-Stadt',typLabel:'Metropole',color:'#4ade80',preisniveau:'Gehoben',mietrenditeTyp:'3,0–4,0%',history:{'2018':3800,'2019':4300,'2020':4700,'2021':5300,'2022':5800,'2023':5200,'2024':5400,'2025':5600},trend:'+3,7%',trendColor:'#4ade80',prognose:'Positiv',leerstand:'Gering',nachfrage:'Hoch',risiko:'Niedrig'},
+  '70':{name:'Stuttgart',typ:'A-Stadt',typLabel:'Metropole',color:'#4ade80',preisniveau:'Hoch',mietrenditeTyp:'2,5–3,5%',history:{'2018':4600,'2019':5100,'2020':5600,'2021':6100,'2022':6600,'2023':5800,'2024':6000,'2025':6200},trend:'+3,3%',trendColor:'#4ade80',prognose:'Stabil',leerstand:'Sehr gering',nachfrage:'Hoch',risiko:'Niedrig'},
+  '40':{name:'Düsseldorf',typ:'A-Stadt',typLabel:'Metropole',color:'#4ade80',preisniveau:'Gehoben',mietrenditeTyp:'3,0–4,0%',history:{'2018':3600,'2019':4100,'2020':4500,'2021':5000,'2022':5500,'2023':4900,'2024':5100,'2025':5300},trend:'+3,9%',trendColor:'#4ade80',prognose:'Positiv',leerstand:'Gering',nachfrage:'Hoch',risiko:'Niedrig'},
+  '30':{name:'Hannover',typ:'B-Stadt',typLabel:'Großstadt',color:'#4fc3f7',preisniveau:'Mittel',mietrenditeTyp:'3,5–4,8%',history:{'2018':2400,'2019':2700,'2020':3000,'2021':3400,'2022':3700,'2023':3300,'2024':3400,'2025':3500},trend:'+2,9%',trendColor:'#4fc3f7',prognose:'Stabil',leerstand:'Mittel',nachfrage:'Mittel-Hoch',risiko:'Moderat'},
+  '04':{name:'Leipzig',typ:'B-Stadt',typLabel:'Wachstumsstadt',color:'#4fc3f7',preisniveau:'Mittel',mietrenditeTyp:'3,8–5,2%',history:{'2018':2100,'2019':2500,'2020':2900,'2021':3400,'2022':3700,'2023':3200,'2024':3300,'2025':3500},trend:'+6,1%',trendColor:'#4ade80',prognose:'Stark steigend',leerstand:'Gering',nachfrage:'Hoch & wachsend',risiko:'Moderat'},
+  '01':{name:'Dresden',typ:'B-Stadt',typLabel:'Wachstumsstadt',color:'#4fc3f7',preisniveau:'Mittel',mietrenditeTyp:'3,5–4,8%',history:{'2018':2200,'2019':2600,'2020':2900,'2021':3200,'2022':3600,'2023':3100,'2024':3200,'2025':3300},trend:'+3,1%',trendColor:'#4fc3f7',prognose:'Positiv',leerstand:'Gering',nachfrage:'Steigend',risiko:'Moderat'},
+  '44':{name:'Dortmund',typ:'B-Stadt',typLabel:'Großstadt',color:'#4fc3f7',preisniveau:'Günstig-Mittel',mietrenditeTyp:'4,0–5,5%',history:{'2018':1800,'2019':2100,'2020':2400,'2021':2700,'2022':2900,'2023':2600,'2024':2700,'2025':2800},trend:'+3,7%',trendColor:'#4fc3f7',prognose:'Moderat positiv',leerstand:'Mittel',nachfrage:'Mittel',risiko:'Moderat'},
+  '51':{name:'Bonn',typ:'B-Stadt',typLabel:'Universitätsstadt',color:'#4fc3f7',preisniveau:'Gehoben',mietrenditeTyp:'3,0–4,2%',history:{'2018':3200,'2019':3600,'2020':4000,'2021':4500,'2022':4900,'2023':4300,'2024':4500,'2025':4700},trend:'+4,4%',trendColor:'#4ade80',prognose:'Positiv',leerstand:'Sehr gering',nachfrage:'Hoch',risiko:'Niedrig'},
+  '53':{name:'Bonn / Rhein-Sieg',typ:'B-Stadt',typLabel:'Speckgürtel Bonn',color:'#4fc3f7',preisniveau:'Mittel-Hoch',mietrenditeTyp:'3,2–4,4%',history:{'2018':2700,'2019':3000,'2020':3400,'2021':3900,'2022':4200,'2023':3700,'2024':3900,'2025':4000},trend:'+2,6%',trendColor:'#4fc3f7',prognose:'Stabil',leerstand:'Gering',nachfrage:'Mittel-Hoch',risiko:'Moderat'},
+  '57':{name:'Engelskirchen / Oberberg',typ:'C-Lage',typLabel:'Mittelstadt / Umland',color:'#facc15',preisniveau:'Mittel',mietrenditeTyp:'3,8–5,2%',history:{'2018':2100,'2019':2400,'2020':2700,'2021':3100,'2022':3300,'2023':2900,'2024':3000,'2025':3100},trend:'+3,3%',trendColor:'#facc15',prognose:'Moderat',leerstand:'Gering-Mittel',nachfrage:'Mittel',risiko:'Moderat-Hoch'},
+  '99':{name:'Erfurt / Thüringen',typ:'C-Lage',typLabel:'Mittelstadt',color:'#facc15',preisniveau:'Günstig',mietrenditeTyp:'4,5–6,5%',history:{'2018':1600,'2019':1900,'2020':2100,'2021':2400,'2022':2600,'2023':2200,'2024':2300,'2025':2400},trend:'+4,3%',trendColor:'#facc15',prognose:'Moderat positiv',leerstand:'Mittel',nachfrage:'Mittel',risiko:'Moderat'},
+  '18':{name:'Rostock / Mecklenburg',typ:'C-Lage',typLabel:'Küstenstadt',color:'#facc15',preisniveau:'Mittel',mietrenditeTyp:'3,5–5,0%',history:{'2018':2000,'2019':2300,'2020':2700,'2021':3200,'2022':3500,'2023':3000,'2024':3100,'2025':3200},trend:'+3,2%',trendColor:'#facc15',prognose:'Stabil',leerstand:'Mittel',nachfrage:'Mittel',risiko:'Moderat'},
+};
+
+function getRegion(plz){
+  if(!plz||plz.length<2)return null;
+  const p2=plz.substring(0,2);
+  if(PLZ_DATA[p2])return PLZ_DATA[p2];
+  const p1=plz.substring(0,1);
+  for(const k of Object.keys(PLZ_DATA)){if(k.startsWith(p1))return null;}
+  return null;
+}
+
+// ─── BERECHNUNGEN ─────────────────────────────────────────────────────
+function calc(){
+  const {kaufpreis,grunderwerbsteuer,notarkosten,maklercourtage,wohnflaeche,
+    eigenkapital,zinssatz,tilgung,kaltmiete,mietausfallWagnis,mietsteigerung,
+    verwaltungskosten,instandhaltung,nichtUmlegbar,isNeubau,isQNG,
+    gebaeudewertAnteil,steuersatz,wertsteigerung,haltedauer} = S;
+
+  const nk_gew=kaufpreis*grunderwerbsteuer/100;
+  const nk_notar=kaufpreis*notarkosten/100;
+  const nk_makler=kaufpreis*maklercourtage/100;
+  const gesamtNK=nk_gew+nk_notar+nk_makler;
+  const gesamtInv=kaufpreis+gesamtNK;
+  const nkPct=gesamtNK/kaufpreis*100;
+  const darlehen=gesamtInv-eigenkapital;
+  const jahreszins=darlehen*zinssatz/100;
+  const jahrestilgung=darlehen*tilgung/100;
+  const jahresrate=jahreszins+jahrestilgung;
+  const monatsrate=jahresrate/12;
+  const jKaltmiete=kaltmiete*12;
+  const mietausfall=jKaltmiete*mietausfallWagnis/100;
+  const effMiete=jKaltmiete-mietausfall;
+  const jVerwaltung=verwaltungskosten*12;
+  const jInstand=instandhaltung*wohnflaeche;
+  const jNichtUmlegbar=nichtUmlegbar*12;
+  const gesamtKosten=jVerwaltung+jInstand+jNichtUmlegbar;
+  const noi=effMiete-gesamtKosten;
+  const cfVorSteuer=noi-jahresrate;
+  const bruttoRendite=jKaltmiete/kaufpreis*100;
+  const nettoRendite=noi/gesamtInv*100;
+  const kpFaktor=kaufpreis/jKaltmiete;
+  const gebWert=kaufpreis*gebaeudewertAnteil/100;
+  let afaSatz=2;if(isNeubau)afaSatz=isQNG?5:3;
+  const jAfA=gebWert*afaSatz/100;
+  const steuerErspar=jAfA*steuersatz/100;
+  const zvE=noi-jahreszins-jAfA;
+  const stLast=zvE>0?zvE*steuersatz/100:0;
+  const cfNachSteuer=cfVorSteuer-stLast+(zvE<0?Math.abs(zvE)*steuersatz/100:0);
+  const ekRendite=(cfNachSteuer+jahrestilgung)/Math.max(eigenkapital,1)*100;
+  const endwert=kaufpreis*Math.pow(1+wertsteigerung/100,haltedauer);
+  const restschuld=Math.max(0,darlehen-jahrestilgung*haltedauer);
+  const ekEndwert=endwert-restschuld;
+  const gesamtMiete=mietsteigerung>0?jKaltmiete*((Math.pow(1+mietsteigerung/100,haltedauer)-1)/(mietsteigerung/100)):jKaltmiete*haltedauer;
+
+  const restschuldArr=[],zinsenArr=[],tilgungArr=[],mietArr=[],kostenArr=[],cfArr=[],vermoegenArr=[];
+  let rs=darlehen;
+  for(let y=1;y<=haltedauer;y++){
+    const z=rs*zinssatz/100;const ti=jahrestilgung;
+    rs=Math.max(0,rs-ti);
+    const m=jKaltmiete*Math.pow(1+mietsteigerung/100,y-1);
+    const k=gesamtKosten;
+    const cf=m*(1-mietausfallWagnis/100)-k-z-ti;
+    const iv=kaufpreis*Math.pow(1+wertsteigerung/100,y);
+    restschuldArr.push(rs);zinsenArr.push(z);tilgungArr.push(ti);
+    mietArr.push(m);kostenArr.push(k+z+ti);cfArr.push(cf);vermoegenArr.push(iv-rs);
+  }
+
+  // Score
+  let s=0;
+  if(bruttoRendite>=5)s+=25;else if(bruttoRendite>=4)s+=15;else if(bruttoRendite>=3)s+=5;
+  if(cfNachSteuer>0)s+=25;else if(cfNachSteuer>-2000)s+=10;
+  if(ekRendite>=8)s+=25;else if(ekRendite>=5)s+=15;else if(ekRendite>=2)s+=5;
+  if(kpFaktor<=20)s+=25;else if(kpFaktor<=25)s+=15;else if(kpFaktor<=30)s+=5;
+  s=Math.min(100,s);
+
+  return {nk_gew,nk_notar,nk_makler,gesamtNK,gesamtInv,nkPct,
+    darlehen,jahreszins,jahrestilgung,jahresrate,monatsrate,
+    jKaltmiete,mietausfall,effMiete,jVerwaltung,jInstand,jNichtUmlegbar,gesamtKosten,
+    noi,cfVorSteuer,cfNachSteuer,
+    bruttoRendite,nettoRendite,kpFaktor,
+    gebWert,afaSatz,jAfA,steuerErspar,ekRendite,
+    endwert,restschuld,ekEndwert,gesamtMiete,
+    restschuldArr,zinsenArr,tilgungArr,mietArr,kostenArr,cfArr,vermoegenArr,
+    years:Array.from({length:haltedauer},(_,i)=>i+1),score:s};
+}
+
+// ─── SLIDER FACTORY ───────────────────────────────────────────────────
+function makeSlider(containerId,key,label,min,max,step,unit,hintFn){
+  const container=document.getElementById(containerId);
+  container.innerHTML=`
+    <div class="slider-wrap">
+      <div class="slider-top">
+        <span class="slider-label">${label}</span>
+        <span class="slider-val" id="${key}-display" title="Klicken zum Eingeben"></span>
+      </div>
+      <div class="slider-controls">
+        <button class="step-btn" id="${key}-minus">−</button>
+        <input type="range" id="${key}-range" min="${min}" max="${max}" step="${step}" value="${S[key]}"/>
+        <button class="step-btn" id="${key}-plus">+</button>
+      </div>
+      ${hintFn?`<p class="hint" id="${key}-hint"></p>`:''}
+    </div>`;
+
+  let editing=false;
+  const disp=document.getElementById(`${key}-display`);
+  const range=document.getElementById(`${key}-range`);
+
+  function formatVal(v){
+    if(unit==='€')return fmtEur(v);
+    if(unit==='%')return fmtPct(v);
+    return `${fmtDE(v,step<1?2:0)} ${unit}`;
+  }
+  function update(v){
+    S[key]=v;range.value=v;disp.textContent=formatVal(v);
+    if(hintFn){const h=document.getElementById(`${key}-hint`);if(h)h.textContent=hintFn();}
+    render();
+  }
+  function commitEdit(rawVal){
+    const cleaned=rawVal.replace(/[^\d,.-]/g,'').replace(',','.');
+    const parsed=parseFloat(cleaned);
+    if(!isNaN(parsed)){
+      const clamped=Math.min(max,Math.max(min,parsed));
+      const rounded=Math.round(clamped/step)*step;
+      update(parseFloat(rounded.toFixed(10)));
+    }
+    editing=false;
+    disp.contentEditable='false';disp.style.outline='none';
+  }
+  disp.addEventListener('click',()=>{
+    if(editing)return;editing=true;
+    disp.contentEditable='true';disp.textContent=String(S[key]);
+    disp.style.outline='1px solid #4fc3f7';disp.style.borderRadius='4px';
+    disp.focus();
+    const sel=window.getSelection();const r=document.createRange();r.selectNodeContents(disp);sel.removeAllRanges();sel.addRange(r);
+  });
+  disp.addEventListener('blur',()=>{if(editing)commitEdit(disp.textContent);});
+  disp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();commitEdit(disp.textContent);}
+    if(e.key==='Escape'){editing=false;disp.contentEditable='false';disp.textContent=formatVal(S[key]);disp.style.outline='none';}
+  });
+  range.addEventListener('input',e=>update(parseFloat(e.target.value)));
+  document.getElementById(`${key}-minus`).addEventListener('click',()=>{
+    update(parseFloat(Math.max(min,Math.round((S[key]-step)/step)*step).toFixed(10)));
+  });
+  document.getElementById(`${key}-plus`).addEventListener('click',()=>{
+    update(parseFloat(Math.min(max,Math.round((S[key]+step)/step)*step).toFixed(10)));
+  });
+  update(S[key]);
+}
+
+// ─── TOGGLE FACTORY ───────────────────────────────────────────────────
+function makeToggle(containerId,key,label,callback){
+  const container=document.getElementById(containerId);
+  container.innerHTML=`
+    <div class="toggle-wrap" id="${key}-toggle-wrap">
+      <div class="toggle-track${S[key]?' on':''}" id="${key}-track">
+        <div class="toggle-thumb"></div>
+      </div>
+      <span class="toggle-label">${label}</span>
+    </div>`;
+  document.getElementById(`${key}-toggle-wrap`).addEventListener('click',()=>{
+    S[key]=!S[key];
+    const t=document.getElementById(`${key}-track`);
+    t.classList.toggle('on',S[key]);
+    if(callback)callback();
+    render();
+  });
+}
+
+// ─── SVG LINE CHART ───────────────────────────────────────────────────
+function lineChart(series,years,height=200,yMinOverride,yMaxOverride){
+  const w=560,h=height,pad={top:20,right:16,bottom:28,left:68};
+  const innerW=w-pad.left-pad.right,innerH=h-pad.top-pad.bottom;
+  const allVals=series.flatMap(s=>s.data);
+  const minV=yMinOverride!==undefined?yMinOverride:Math.min(0,...allVals)*1.15;
+  const maxV=yMaxOverride!==undefined?yMaxOverride:Math.max(...allVals)*1.1;
+  const range=maxV-minV||1;
+  const x=i=>pad.left+(i/Math.max(years.length-1,1))*innerW;
+  const y=v=>pad.top+innerH-((v-minV)/range)*innerH;
+  const yTicks=5;
+  let svg=`<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:${height}px">`;
+  for(let i=0;i<=yTicks;i++){
+    const v=minV+(range/yTicks)*i;const yy=y(v);
+    svg+=`<line x1="${pad.left}" y1="${yy}" x2="${w-pad.right}" y2="${yy}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;
+    svg+=`<text x="${pad.left-6}" y="${yy+4}" text-anchor="end" font-size="9" fill="#4a5f73">${fmtEur(v,0).replace(/\s?€/,'')}</text>`;
+  }
+  if(minV<0&&maxV>0){
+    const z=y(0);svg+=`<line x1="${pad.left}" y1="${z}" x2="${w-pad.right}" y2="${z}" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4,3"/>`;
+  }
+  years.forEach((yr,i)=>{
+    if(i%Math.ceil(years.length/10)!==0&&i!==years.length-1)return;
+    svg+=`<text x="${x(i)}" y="${h-4}" text-anchor="middle" font-size="9" fill="#4a5f73">${yr}</text>`;
+  });
+  series.forEach((s,si)=>{
+    const pts=s.data.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+    svg+=`<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-opacity="0.9"/>`;
+    s.data.forEach((v,i)=>{
+      if(i%Math.ceil(years.length/7)!==0&&i!==s.data.length-1)return;
+      svg+=`<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="${s.color}"/>`;
+    });
+    svg+=`<g transform="translate(${pad.left+si*150},${pad.top-4})"><line x1="0" y1="6" x2="14" y2="6" stroke="${s.color}" stroke-width="2"/><text x="18" y="10" font-size="9" fill="${s.color}">${s.label}</text></g>`;
+  });
+  return svg+'</svg>';
+}
+
+// ─── MINI STAT BOX ───────────────────────────────────────────────────
+function statBox(l,v,col='#e8f4fd'){
+  return `<div class="meta-box"><div class="meta-box-label">${l}</div><div class="meta-box-val" style="color:${col}">${v}</div></div>`;
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────
+function render(){
+  const C=calc();
+  const scoreColor=C.score>=70?'#4ade80':C.score>=45?'#facc15':'#f87171';
+  const scoreLabel=C.score>=70?'Attraktiv':C.score>=45?'Solide':'Kritisch';
+  const region=getRegion(S.plz);
+
+  // Header score
+  const badge=document.getElementById('score-badge');
+  badge.style.borderColor=scoreColor;
+  badge.style.boxShadow=`0 0 20px ${scoreColor}30`;
+  document.getElementById('score-num').textContent=C.score;
+  document.getElementById('score-num').style.color=scoreColor;
+  document.getElementById('score-label').textContent=scoreLabel;
+  document.getElementById('score-label').style.color=scoreColor;
+
+  // PLZ display
+  const plzDisp=document.getElementById('plz-name-display');
+  if(region){plzDisp.innerHTML=`<span style="color:${region.color}">${region.name}</span><br><span class="plz-typ">${region.typLabel}</span>`;}
+  else{plzDisp.innerHTML='<span style="color:#5a6e82">PLZ für Lageanalyse</span>';}
+
+  // Eigenkapital max
+  const ekRange=document.getElementById('eigenkapital-range');
+  if(ekRange)ekRange.max=S.kaufpreis*1.15;
+
+  // Hints
+  const kpH=document.getElementById('kaufpreis-hint');if(kpH)kpH.textContent=`→ ${fmtEur(S.kaufpreis/S.wohnflaeche,0)}/m²`;
+  const wfH=document.getElementById('wohnflaeche-hint');if(wfH)wfH.textContent=`→ ${fmtEur(S.kaufpreis/S.wohnflaeche,0)}/m²`;
+  const ekH=document.getElementById('eigenkapital-hint');if(ekH)ekH.textContent=`Beleihung: ${fmtDE((1-S.eigenkapital/C.gesamtInv)*100,1)}%`;
+  const kmH=document.getElementById('kaltmiete-hint');if(kmH)kmH.textContent=`→ ${fmtEur(S.kaltmiete/S.wohnflaeche,2)}/m²`;
+
+  // QNG toggle
+  const qngWrap=document.getElementById('toggle-qng');
+  if(qngWrap)qngWrap.style.display=S.isNeubau?'block':'none';
+
+  // ── TAB: ÜBERSICHT ────────────────────────────────────────────────
+  const pos=v=>v>=0?'#4ade80':'#f87171';
+  document.getElementById('tab-uebersicht').innerHTML=`
+    <div class="kpi-grid">
+      ${kpiCard('Bruttorendite',fmtPct(C.bruttoRendite),'Jahresmiete / KP',true,C.bruttoRendite>=4,C.bruttoRendite<3)}
+      ${kpiCard('Nettorendite',fmtPct(C.nettoRendite),'nach Bewirtschaftung',false,C.nettoRendite>=3,C.nettoRendite<2)}
+      ${kpiCard('Monatl. Cashflow',fmtEur(C.cfNachSteuer/12,0),'nach Steuer',false,C.cfNachSteuer>0,C.cfNachSteuer<0)}
+      ${kpiCard('EK-Rendite',fmtPct(C.ekRendite),'auf einges. Kapital',false,C.ekRendite>=6,C.ekRendite<2)}
+      ${kpiCard('Kaufpreisfaktor',`${fmtDE(C.kpFaktor,1)}x`,'Jahresnettomieten',false,C.kpFaktor<=22,C.kpFaktor>30)}
+      ${kpiCard('Gesamtinvestition',fmtEur(C.gesamtInv),`+${fmtDE(C.nkPct,1)}% NK`,false,false,false)}
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h4>🏷️ Kaufnebenkosten</h4>
+        ${row('Kaufpreis',fmtEur(S.kaufpreis))}
+        ${row('Grunderwerbsteuer',fmtEur(C.nk_gew),'',false,'')}
+        ${row('Notar & Grundbuch',fmtEur(C.nk_notar))}
+        ${row('Maklercourtage',fmtEur(C.nk_makler))}
+        ${row('Gesamtnebenkosten',fmtEur(C.gesamtNK),'',true)}
+        ${row('Gesamtinvestition',fmtEur(C.gesamtInv),'',true,'#4fc3f7')}
+      </div>
+      <div class="card">
+        <h4>🏦 Finanzierung</h4>
+        ${row('Eigenkapital',fmtEur(S.eigenkapital))}
+        ${row('Darlehensbetrag',fmtEur(C.darlehen))}
+        ${row('Jahreszins',fmtEur(C.jahreszins),fmtPct(S.zinssatz))}
+        ${row('Jahrestilgung',fmtEur(C.jahrestilgung),fmtPct(S.tilgung))}
+        ${row('Jahresrate',fmtEur(C.jahresrate),'',true)}
+        ${row('Monatsrate',fmtEur(C.monatsrate,0),'',true,'#4fc3f7')}
+      </div>
+      <div class="card">
+        <h4>💰 Jährl. Cashflow</h4>
+        ${row('Jahreskaltmiete',fmtEur(C.jKaltmiete))}
+        ${row('− Mietausfall',fmtEur(-C.mietausfall))}
+        ${row('= Effektive Miete',fmtEur(C.effMiete),'',true)}
+        ${row('− Verwaltung',fmtEur(-C.jVerwaltung))}
+        ${row('− Instandhaltung',fmtEur(-C.jInstand))}
+        ${row('− nicht umlegbare NK',fmtEur(-C.jNichtUmlegbar))}
+        ${row('= NOI',fmtEur(C.noi),'',true)}
+        ${row('− Zinsen',fmtEur(-C.jahreszins))}
+        ${row('− Tilgung',fmtEur(-C.jahrestilgung))}
+        ${row('= Cashflow v. Steuer',fmtEur(C.cfVorSteuer),'',true,pos(C.cfVorSteuer))}
+        ${row('≈ Cashflow n. Steuer',fmtEur(C.cfNachSteuer),'',true,pos(C.cfNachSteuer))}
+      </div>
+      <div class="gradient-card">
+        <h4>📈 Nach ${S.haltedauer} Jahren</h4>
+        ${row('Immobilienwert',fmtEur(C.endwert),'',false,'#4fc3f7')}
+        ${row('Restschuld',fmtEur(C.restschuld),'',false,'#f87171')}
+        ${row('EK-Endwert',fmtEur(C.ekEndwert),'',true,'#4ade80')}
+        ${row('Gesamtmieteinnahmen',fmtEur(C.gesamtMiete),'',false,'#a78bfa')}
+        <p class="disclaimer">⚠️ Vereinfachte Hochrechnung. Keine steuerliche Beratung.</p>
+      </div>
+    </div>`;
+
+  // ── TAB: LAGE & SCORE ─────────────────────────────────────────────
+  const scoreData=[
+    {label:'Bruttorendite',icon:'📊',value:fmtPct(C.bruttoRendite),
+     punkte:C.bruttoRendite>=5?25:C.bruttoRendite>=4?15:C.bruttoRendite>=3?5:0,max:25,
+     color:C.bruttoRendite>=5?'#4ade80':C.bruttoRendite>=4?'#4fc3f7':C.bruttoRendite>=3?'#facc15':'#f87171',
+     schwellen:[{l:'≥ 5,0%',p:25,ok:C.bruttoRendite>=5},{l:'≥ 4,0%',p:15,ok:C.bruttoRendite>=4&&C.bruttoRendite<5},{l:'≥ 3,0%',p:5,ok:C.bruttoRendite>=3&&C.bruttoRendite<4},{l:'< 3,0%',p:0,ok:C.bruttoRendite<3}],
+     beurt:C.bruttoRendite>=5?'Hervorragend – überdurchschnittlich für Deutschland':C.bruttoRendite>=4?'Gut – marktüblich für B/C-Städte':C.bruttoRendite>=3?'Schwach – typisch für A-Stadtlagen':'Kritisch – Kaufpreis zu hoch relativ zur Miete',
+     erkl:'Jahres-Kaltmiete ÷ Kaufpreis. Faustregel: ≥ 4% solide, ≥ 5% sehr gut. In Toplagen oft 2–3%, dafür höhere Wertsteigerung.'},
+    {label:'Cashflow nach Steuer',icon:'💰',value:fmtEur(C.cfNachSteuer/12,0)+'/Mo',
+     punkte:C.cfNachSteuer>0?25:C.cfNachSteuer>-2000?10:0,max:25,
+     color:C.cfNachSteuer>0?'#4ade80':C.cfNachSteuer>-2000?'#facc15':'#f87171',
+     schwellen:[{l:'Positiv',p:25,ok:C.cfNachSteuer>0},{l:'−2.000 bis 0 €',p:10,ok:C.cfNachSteuer<=0&&C.cfNachSteuer>-2000},{l:'< −2.000 €/J',p:0,ok:C.cfNachSteuer<=-2000}],
+     beurt:C.cfNachSteuer>0?'Positiv – Immobilie trägt sich selbst':C.cfNachSteuer>-2000?'Leicht negativ – geringe Zuzahlung nötig':'Stark negativ – hohe monatliche Eigenleistung',
+     erkl:'Mieteinnahmen minus alle Kosten, Zinsen, Tilgung & Steuern. Positiver Cashflow = sofortige freie Liquidität.'},
+    {label:'Eigenkapitalrendite',icon:'🏦',value:fmtPct(C.ekRendite),
+     punkte:C.ekRendite>=8?25:C.ekRendite>=5?15:C.ekRendite>=2?5:0,max:25,
+     color:C.ekRendite>=8?'#4ade80':C.ekRendite>=5?'#4fc3f7':C.ekRendite>=2?'#facc15':'#f87171',
+     schwellen:[{l:'≥ 8,0%',p:25,ok:C.ekRendite>=8},{l:'≥ 5,0%',p:15,ok:C.ekRendite>=5&&C.ekRendite<8},{l:'≥ 2,0%',p:5,ok:C.ekRendite>=2&&C.ekRendite<5},{l:'< 2,0%',p:0,ok:C.ekRendite<2}],
+     beurt:C.ekRendite>=8?'Exzellent – deutlich über Alternativanlagen':C.ekRendite>=5?'Gut – konkurrenzfähig mit Aktien/ETFs':C.ekRendite>=2?'Schwach – kaum besser als Tagesgeld':'Kritisch – Eigenkapital schlecht investiert',
+     erkl:'(Cashflow n. Steuer + Tilgung) ÷ Eigenkapital. Misst Verzinsung inkl. Hebeleffekt durch Fremdfinanzierung.'},
+    {label:'Kaufpreisfaktor',icon:'🏷️',value:`${fmtDE(C.kpFaktor,1)}x`,
+     punkte:C.kpFaktor<=20?25:C.kpFaktor<=25?15:C.kpFaktor<=30?5:0,max:25,
+     color:C.kpFaktor<=20?'#4ade80':C.kpFaktor<=25?'#4fc3f7':C.kpFaktor<=30?'#facc15':'#f87171',
+     schwellen:[{l:'≤ 20x',p:25,ok:C.kpFaktor<=20},{l:'21–25x',p:15,ok:C.kpFaktor>20&&C.kpFaktor<=25},{l:'26–30x',p:5,ok:C.kpFaktor>25&&C.kpFaktor<=30},{l:'> 30x',p:0,ok:C.kpFaktor>30}],
+     beurt:C.kpFaktor<=20?'Günstig – sehr attraktiver Einkauf':C.kpFaktor<=25?'Marktüblich – vertretbar in B/C-Lagen':C.kpFaktor<=30?'Teuer – nur mit Wertsteigerung sinnvoll':'Sehr teuer – typisch A-Stadt, Rendite leidet stark',
+     erkl:'Kaufpreis ÷ Jahresnettokaltmiete. Zeigt Amortisationsdauer in Mietjahren. Je niedriger, desto günstiger.'},
+  ];
+
+  let lageHTML=`
+    <div class="score-panel" style="border:2px solid ${scoreColor}40">
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:18px">
+        <div class="score-circle" style="background:${scoreColor}15;border:3px solid ${scoreColor};box-shadow:0 0 24px ${scoreColor}30">
+          <div class="score-circle-num" style="color:${scoreColor}">${C.score}</div>
+          <div style="font-size:9px;color:${scoreColor};letter-spacing:0.08em">/ 100</div>
+        </div>
+        <div>
+          <div style="font-size:20px;font-weight:700;color:${scoreColor};font-family:'DM Serif Display',serif">${scoreLabel}</div>
+          <div style="font-size:12px;color:#8a9bb0;margin-top:4px;line-height:1.5">
+            ${C.score>=70?'Starke Kennzahlen — diese Immobilie erfüllt gängige Renditekriterien sehr gut.':C.score>=45?'Solide Basis — einzelne Kennzahlen unter Idealwert, aber insgesamt vertretbar.':'Kritische Werte — mehrere Kernkennzahlen unter Mindeststandard. Kaufpreis oder Miete prüfen.'}
+          </div>
+        </div>
+      </div>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:${C.score}%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#3d5266"><span>0 — Kritisch</span><span>50 — Solide</span><span>100 — Exzellent</span></div>
+    </div>
+    <h4 style="margin:0 0 14px;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#4fc3f7">🔍 Score-Kriterien im Detail</h4>`;
+
+  scoreData.forEach(d=>{
+    lageHTML+=`
+      <div class="criteria-card" style="background:rgba(255,255,255,0.02);border:1px solid ${d.color}30;border-left:3px solid ${d.color}">
+        <div class="crit-header">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:16px">${d.icon}</span>
+            <span style="font-size:13px;font-weight:600;color:#c8dce8">${d.label}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="crit-val" style="color:${d.color}">${d.value}</span>
+            <span class="crit-pts" style="color:${d.color}">${d.punkte}/${d.max} Pkt</span>
+          </div>
+        </div>
+        <div class="pt-bar-bg"><div class="pt-bar-fill" style="width:${(d.punkte/d.max)*100}%;background:${d.color}"></div></div>
+        <div class="schwellen">${d.schwellen.map(s=>`<div class="schwelle" style="background:${s.ok?d.color+'20':'rgba(255,255,255,0.04)'};border:1px solid ${s.ok?d.color+'60':'rgba(255,255,255,0.06)'};color:${s.ok?d.color:'#5a6e82'};font-weight:${s.ok?'600':'400'}">${s.ok?'✓ ':''}${s.l} = ${s.p} Pkt</div>`).join('')}</div>
+        <div class="crit-beurt" style="color:${d.color}">${d.beurt}</div>
+        <div class="crit-erkl">${d.erkl}</div>
+      </div>`;
+  });
+
+  lageHTML+=`<h4 style="margin:22px 0 14px;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#4fc3f7">📍 Historische Wertentwicklung — PLZ ${S.plz||'—'}</h4>`;
+
+  if(region){
+    const hYears=Object.keys(region.history);
+    const hVals=Object.values(region.history);
+    const peakIdx=hVals.indexOf(Math.max(...hVals));
+    const minV=Math.min(...hVals)*0.88,maxV=Math.max(...hVals)*1.08,range=maxV-minV;
+    const W=560,H=160,padL=60,padR=20,padT=16,padB=28;
+    const iW=W-padL-padR,iH=H-padT-padB;
+    const x=i=>padL+(i/(hYears.length-1))*iW;
+    const y=v=>padT+iH-((v-minV)/range)*iH;
+    const pts=hVals.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+    const areaBottom=padT+iH;
+    const areaPts=`${x(0)},${areaBottom} ${pts} ${x(hYears.length-1)},${areaBottom}`;
+
+    let svgChart=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px">
+      <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${region.color}" stop-opacity="0.18"/>
+        <stop offset="100%" stop-color="${region.color}" stop-opacity="0.01"/>
+      </linearGradient></defs>`;
+    [0,1,2,3].forEach(i=>{
+      const v=minV+(range/3)*i;const yy=y(v);
+      svgChart+=`<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;
+      svgChart+=`<text x="${padL-6}" y="${yy+4}" text-anchor="end" font-size="9" fill="#4a5f73">${fmtEur(v,0).replace(/\s?€/,'')}</text>`;
+    });
+    svgChart+=`<polygon points="${areaPts}" fill="url(#ag)"/>`;
+    svgChart+=`<polyline points="${pts}" fill="none" stroke="${region.color}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    hVals.forEach((v,i)=>{
+      svgChart+=`<circle cx="${x(i)}" cy="${y(v)}" r="${i===peakIdx?5:3}" fill="${i===peakIdx?'#f87171':region.color}"/>`;
+      svgChart+=`<text x="${x(i)}" y="${H-4}" text-anchor="middle" font-size="9" fill="#4a5f73">${hYears[i]}</text>`;
+      if(i===peakIdx)svgChart+=`<text x="${x(i)}" y="${y(v)-8}" text-anchor="middle" font-size="9" fill="#f87171">Peak</text>`;
+      if(i===hVals.length-1)svgChart+=`<text x="${x(i)-4}" y="${y(v)-8}" text-anchor="end" font-size="9" fill="${region.color}">${fmtEur(v,0)}</text>`;
+    });
+    svgChart+='</svg>';
+
+    // Year-over-year bars
+    const maxChg=15;
+    let yrBars='<div class="yr-bars">';
+    hYears.forEach((yr,i)=>{
+      if(i===0)return;
+      const prev=hVals[i-1];const chg=(hVals[i]-prev)/prev*100;const pos=chg>=0;
+      const bH=Math.min(Math.abs(chg)/maxChg*70,70);
+      yrBars+=`<div class="yr-bar-wrap">
+        <div class="yr-bar-pct" style="color:${pos?'#4ade80':'#f87171'}">${chg>=0?'+':''}${fmtDE(chg,1)}%</div>
+        <div class="yr-bar-inner">
+          <div class="yr-bar" style="height:${bH}px;background:${pos?'#4ade80':'#f87171'};border-radius:${pos?'3px 3px 0 0':'0 0 3px 3px'};opacity:0.8"></div>
+        </div>
+        <div class="yr-bar-lbl">${yr}</div>
+      </div>`;
+    });
+    yrBars+='</div>';
+
+    lageHTML+=`
+      <div class="region-header" style="background:${region.color}10;border:1px solid ${region.color}40">
+        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+          <div style="flex:1">
+            <div style="font-size:18px;font-weight:700;color:${region.color};font-family:'DM Serif Display',serif">${region.name}</div>
+            <div style="font-size:12px;color:#8a9bb0;margin-top:2px">${region.typLabel} · Lagetyp: <span style="color:${region.color}">${region.typ}</span></div>
+          </div>
+          <div class="region-meta">
+            ${statBox('Ø m²-Preis 2025',`${fmtEur(hVals[hVals.length-1],0)}/m²`)}
+            ${statBox('10J-Trend',region.trend,region.trendColor)}
+            ${statBox('Typische Rendite',region.mietrenditeTyp)}
+            ${statBox('Nachfrage',region.nachfrage)}
+            ${statBox('Leerstandsrisiko',region.leerstand)}
+            ${statBox('Prognose',region.prognose,region.trendColor)}
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h4>📊 Ø Kaufpreis/m² — Historische Entwicklung</h4>
+        <p style="font-size:11px;color:#5a6e82;margin-bottom:14px">Indikative Daten auf Basis Destatis-Häuserpreisindex &amp; GREIX-Auswertungen für diesen Regionstyp</p>
+        ${svgChart}
+      </div>
+      <div class="card">
+        <h4>📅 Jährliche Preisveränderung (%)</h4>
+        ${yrBars}
+      </div>
+      <div class="card">
+        <h4>🇩🇪 Marktkontext Deutschland (Destatis / GREIX)</h4>
+        <div class="market-grid">
+          ${[
+            {j:'2022',chg:'+5,3%',col:'#4ade80',t:'Letztes Boomjahr — Preise auf Allzeithoch. EZB beginnt Zinswende im Sommer.'},
+            {j:'2023',chg:'−8,4%',col:'#f87171',t:'Stärkster Rückgang seit 2000 (Destatis). Hauptgrund: rasant gestiegene Bauzinsen.'},
+            {j:'2024',chg:'−1,5%',col:'#facc15',t:'Leichte Erholung ab Q3. Markt stabilisiert sich auf neuem Niveau (GREIX).'},
+            {j:'2025',chg:'+3,2%',col:'#4ade80',t:'Moderater Anstieg. Nachfrage zieht an, EZB senkt Leitzinsen. Bestand > Neubau.'},
+          ].map(m=>`<div class="market-item"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span class="market-year">${m.j}</span><span class="market-chg" style="color:${m.col}">${m.chg}</span></div><div class="market-text">${m.t}</div></div>`).join('')}
+        </div>
+        <p style="margin-top:12px;font-size:10px;color:#3d5266;line-height:1.6">Quellen: Statistisches Bundesamt (Destatis), GREIX/IfW Kiel, empirica-Immobilienpreisindex. PLZ-Daten sind repräsentative Richtwerte für den Regionstyp. ⚠️ Keine Anlageberatung.</p>
+      </div>`;
+  } else {
+    lageHTML+=`<div class="no-plz"><div style="font-size:32px;margin-bottom:12px">📍</div><div style="font-size:14px;color:#8a9bb0;margin-bottom:8px">PLZ eingeben für Lageanalyse</div><div style="font-size:12px;color:#5a6e82">Unterstützte PLZ-Bereiche: 01, 04, 10, 18, 20, 30, 40, 44, 50, 51, 53, 57, 60, 70, 80, 99</div></div>`;
+  }
+  document.getElementById('tab-lage').innerHTML=lageHTML;
+
+  // ── TAB: ABSCHREIBUNG ─────────────────────────────────────────────
+  const afaVarianten=[
+    {name:'Bestand',satz:2,para:'§ 7 Abs.4 EStG',color:'#4fc3f7',desc:'Standardsatz für Bestandsgebäude (Baujahr ≥1925)',isActive:!S.isNeubau},
+    {name:'Neubau (ab 2023)',satz:3,para:'§ 7 Abs.4 EStG',color:'#a78bfa',desc:'Erhöhter Satz für Neubauten ab Baujahr 2023',isActive:S.isNeubau&&!S.isQNG},
+    {name:'QNG-Neubau (§7b)',satz:5,para:'§ 7b EStG',color:'#4ade80',desc:'Sonderabschreibung mit QNG-Siegel, 10 Jahre 5%, danach 2%',isActive:S.isQNG},
+    {name:'Denkmal (§7i)',satz:9,para:'§ 7i EStG',color:'#fb923c',desc:'9% p.a. 8 Jahre, dann 7% p.a. 4 Jahre auf Sanierungskosten',isActive:false},
+  ];
+  const gw=C.gebWert;
+
+  let afaHTML=`<div class="afa-summary">`;
+  [{l:'Aktiver AfA-Typ',v:S.isQNG?'QNG-Neubau (§7b)':S.isNeubau?'Neubau (§7 Abs.4)':'Bestand (§7 Abs.4)',col:'#4ade80'},
+   {l:'Gebäudewert',v:fmtEur(gw),col:'#e8f4fd'},
+   {l:'AfA-Satz',v:fmtPct(C.afaSatz),col:'#4fc3f7'},
+   {l:'Abschreibung/Jahr',v:fmtEur(C.jAfA),col:'#4fc3f7'},
+   {l:'Steuerersparnis/Jahr',v:fmtEur(C.steuerErspar),col:'#4ade80'},
+   {l:`Kum. Ersparnis (${S.haltedauer}J)`,v:fmtEur(C.steuerErspar*S.haltedauer),col:'#4ade80'},
+  ].forEach(i=>{afaHTML+=`<div><div style="font-size:10px;color:#5a6e82;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px">${i.l}</div><div style="font-size:18px;font-weight:700;color:${i.col};font-family:'DM Serif Display',serif">${i.v}</div></div>`;});
+  afaHTML+='</div>';
+  afaHTML+='<h4 style="margin:0 0 14px;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#4fc3f7">📋 Alle AfA-Varianten im Vergleich</h4>';
+  afaHTML+='<div class="afa-var-grid">';
+  afaVarianten.forEach(v=>{
+    const afaJ=v.name.startsWith('QNG')?gw*0.05:v.name.startsWith('Denkmal')?gw*0.09:gw*v.satz/100;
+    const ersJ=afaJ*S.steuersatz/100;
+    let kumAfa=0;
+    for(let y=0;y<S.haltedauer;y++){
+      let a;if(v.name.startsWith('QNG'))a=y<10?gw*0.05:gw*0.02;
+      else if(v.name.startsWith('Denkmal'))a=y<8?gw*0.09:y<12?gw*0.07:gw*0.02;
+      else a=gw*v.satz/100;
+      kumAfa+=a;kumAfa=Math.min(kumAfa,gw);
+    }
+    const ersK=kumAfa*S.steuersatz/100;
+    afaHTML+=`<div class="afa-var-card" style="background:${v.isActive?v.color+'10':'rgba(255,255,255,0.02)'};border:1px solid ${v.isActive?v.color+'60':'rgba(255,255,255,0.07)'};box-shadow:${v.isActive?`0 0 16px ${v.color}18`:'none'}">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <div><div class="afa-var-name" style="color:${v.color}">${v.name}</div><div class="afa-var-para">${v.para}</div></div>
+        ${v.isActive?`<span class="afa-badge" style="background:${v.color}20;color:${v.color};border:1px solid ${v.color}40">Aktiv</span>`:''}
+      </div>
+      <div class="afa-var-desc">${v.desc}</div>
+      <div class="afa-var-stats">
+        ${[{l:'AfA-Satz',v:v.name.startsWith('QNG')?'5%→2%':v.name.startsWith('Denkmal')?'9%→7%→2%':fmtPct(v.satz)},{l:'Abschr./Jahr',v:fmtEur(afaJ)},{l:'Ersparnis/Jahr',v:fmtEur(ersJ),col:'#4ade80'},{l:`Kum. ${S.haltedauer}J`,v:fmtEur(ersK),col:'#4ade80'}].map(s=>`<div class="afa-stat"><div class="afa-stat-label">${s.l}</div><div class="afa-stat-val" style="color:${s.col||'#e8f4fd'}">${s.v}</div></div>`).join('')}
+      </div>
+    </div>`;
+  });
+  afaHTML+='</div>';
+
+  // Kumulierte AfA Line Chart
+  const yrLabels=C.years.map(y=>`J${y}`);
+  const afaSeriesData=afaVarianten.map(v=>{
+    let kum=0;
+    const data=C.years.map((_,y)=>{
+      let a;if(v.name.startsWith('QNG'))a=y<10?gw*0.05:gw*0.02;
+      else if(v.name.startsWith('Denkmal'))a=y<8?gw*0.09:y<12?gw*0.07:gw*0.02;
+      else a=gw*v.satz/100;
+      kum+=a;return Math.min(kum,gw);
+    });
+    return{label:v.name,data,color:v.color};
+  });
+  afaHTML+=`<div class="card"><h4>📈 Kumulierte Abschreibung über ${S.haltedauer} Jahre</h4><p style="font-size:11px;color:#5a6e82;margin-bottom:14px">Alle Varianten auf Basis Gebäudewert ${fmtEur(gw)} — max. abschreibbar ist der gesamte Gebäudewert</p>${lineChart(afaSeriesData,yrLabels,210,0,gw*1.05)}</div>`;
+
+  // Steuerersparnis bars
+  afaHTML+=`<div class="card"><h4>💸 Jährliche Steuerersparnis — Variantenvergleich</h4><p style="font-size:11px;color:#5a6e82;margin-bottom:14px">Effektive Ersparnis im ersten Jahr bei Steuersatz ${S.steuersatz}%</p><div class="ersparnis-bars">`;
+  afaVarianten.forEach(v=>{
+    const afaJ=v.name.startsWith('QNG')?gw*0.05:v.name.startsWith('Denkmal')?gw*0.09:gw*v.satz/100;
+    const ers=afaJ*S.steuersatz/100;const maxE=gw*0.09*S.steuersatz/100;const pct=ers/maxE*100;
+    afaHTML+=`<div class="erspar-bar" style="border:1px solid ${v.color}30">
+      <div class="erspar-name" style="color:${v.color}">${v.name}</div>
+      <div class="erspar-val">${fmtEur(ers)}</div>
+      <div class="erspar-sub">pro Jahr</div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${v.color}"></div></div>
+    </div>`;
+  });
+  afaHTML+='</div></div>';
+
+  // Gesetzliche Grundlagen
+  afaHTML+=`<div class="card"><h4>📖 Gesetzliche Grundlagen</h4><div class="legal-grid">
+    ${[
+      {para:'§ 7 Abs.4 EStG',title:'Linear-AfA Bestand',text:'2% p.a. für Gebäude ab Baujahr 1925 (Nutzungsdauer 50 Jahre). Basis: anteiliger Gebäudewert ohne Grundstück.'},
+      {para:'§ 7 Abs.4 EStG (2023)',title:'Linear-AfA Neubau',text:'3% p.a. für neue Wohngebäude mit Fertigstellung ab 01.01.2023. Nutzungsdauer 33 Jahre.'},
+      {para:'§ 7b EStG',title:'Sonder-AfA QNG-Neubau',text:'5% p.a. für max. 10 Jahre bei Neubau mit QNG-Siegel (Bauantrag bis 31.12.2026). Danach reguläre 2% AfA.'},
+      {para:'§ 7i / 7h EStG',title:'Denkmal-AfA',text:'9% p.a. 8 Jahre, dann 7% 4 Jahre auf Sanierungskosten. § 7h gilt für Sanierungsgebiete.'},
+    ].map(i=>`<div class="legal-item"><div class="legal-para">${i.para}</div><div class="legal-title">${i.title}</div><div class="legal-text">${i.text}</div></div>`).join('')}
+  </div></div>`;
+  document.getElementById('tab-abschreibung').innerHTML=afaHTML;
+
+  // ── TAB: KOSTENENTWICKLUNG ─────────────────────────────────────────
+  let kostenHTML=`
+    <div class="card">
+      <h4>💰 Cashflow-Entwicklung über ${S.haltedauer} Jahre</h4>
+      <p style="font-size:11px;color:#5a6e82;margin-bottom:14px">Jährl. Cashflow vor Steuer | steigende Miete mit ${fmtPct(S.mietsteigerung)} p.a. | sinkende Zinslast</p>
+      ${lineChart([{label:'Cashflow vor Steuer',data:C.cfArr,color:'#4ade80'},{label:'Mieteinnahmen',data:C.mietArr,color:'#4fc3f7'},{label:'Gesamtkosten (inkl. Annuität)',data:C.kostenArr,color:'#f87171'}],yrLabels,210)}
+    </div>
+    <div class="card">
+      <h4>🏦 Vermögens- &amp; Restschuldentwicklung</h4>
+      <p style="font-size:11px;color:#5a6e82;margin-bottom:14px">Nettovermögen = Immobilienwert (bei ${fmtPct(S.wertsteigerung)} p.a.) minus Restschuld</p>
+      ${lineChart([{label:'Nettovermögen (EK-Anteil)',data:C.vermoegenArr,color:'#4ade80'},{label:'Restschuld',data:C.restschuldArr,color:'#f87171'}],yrLabels,210,0)}
+    </div>
+    <div class="card">
+      <h4>⚖️ Zinsen vs. Tilgung über die Zeit</h4>
+      <p style="font-size:11px;color:#5a6e82;margin-bottom:14px">Mit sinkender Restschuld verringert sich der Zinsanteil — Tilgungsanteil bleibt konstant</p>
+      <div style="display:flex;gap:2px;align-items:flex-end;height:150px;padding:0 4px">`;
+  C.years.forEach((_, i)=>{
+    const z=C.zinsenArr[i],t=C.tilgungArr[i];
+    const maxTot=C.zinsenArr[0]+C.tilgungArr[0];
+    const zH=(z/maxTot)*110,tH=(t/maxTot)*110;
+    if(C.years.length>20&&i%2!==0&&i!==C.years.length-1)return;
+    if(C.years.length>30&&i%3!==0&&i!==C.years.length-1)return;
+    kostenHTML+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
+      <div style="width:100%">
+        <div style="width:100%;height:${zH}px;background:#f87171;border-radius:2px 2px 0 0;min-height:${z>0?'1px':'0'}"></div>
+        <div style="width:100%;height:${tH}px;background:#4fc3f7"></div>
+      </div>
+      <div style="font-size:8px;color:#4a5f73;margin-top:3px">J${i+1}</div>
+    </div>`;
+  });
+  kostenHTML+=`</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div>Zinsanteil (sinkend)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4fc3f7"></div>Tilgungsanteil (konstant)</div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>📊 Jährliche Kostenstruktur (Jahr 1)</h4>
+      <div class="cost-items">`;
+  const costItems=[
+    {label:'Zinsen',val:C.jahreszins,color:'#f87171'},
+    {label:'Tilgung',val:C.jahrestilgung,color:'#4fc3f7'},
+    {label:'Verwaltung',val:C.jVerwaltung,color:'#a78bfa'},
+    {label:'Instandhaltung',val:C.jInstand,color:'#fb923c'},
+    {label:'Nicht umlegb. NK',val:C.jNichtUmlegbar,color:'#facc15'},
+    {label:'Mietausfall',val:C.mietausfall,color:'#f472b6'},
+  ];
+  const costTotal=costItems.reduce((s,i)=>s+i.val,0);
+  costItems.forEach(item=>{
+    const pct=costTotal>0?item.val/costTotal*100:0;
+    kostenHTML+=`<div class="cost-item">
+      <div class="cost-item-top">
+        <span style="font-size:11px;color:${item.color};font-weight:600">${item.label}</span>
+        <span style="font-size:10px;color:#5a6e82">${fmtDE(pct,1)}%</span>
+      </div>
+      <div class="cost-item-val">${fmtEur(item.val)}</div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${item.color}"></div></div>
+    </div>`;
+  });
+  kostenHTML+=`</div>
+      <p class="disclaimer">⚠️ Vereinfachte Modellrechnung. Zinsanteil sinkt mit der Restschuld (lineare Tilgung). Bei echten Annuitätendarlehen bleibt die Rate konstant. Für verbindliche Berechnungen Steuerberater/Finanzberater hinzuziehen.</p>
+    </div>`;
+  document.getElementById('tab-kosten').innerHTML=kostenHTML;
+}
+
+// ─── HILFSFUNKTIONEN ─────────────────────────────────────────────────
+function kpiCard(label,value,sub,highlight,positive,negative){
+  const bg=highlight?'linear-gradient(135deg,#1a3a5c 0%,#0d2137 100%)':'rgba(255,255,255,0.03)';
+  const border=highlight?'#4fc3f7':'rgba(255,255,255,0.07)';
+  const col=positive?'#4ade80':negative?'#f87171':highlight?'#4fc3f7':'#e8f4fd';
+  const fs=highlight?'26px':'22px';
+  return `<div class="kpi-card" style="background:${bg};border:1px solid ${border};box-shadow:${highlight?'0 0 24px rgba(79,195,247,0.15)':'none'}">
+    <div class="kpi-label">${label}</div>
+    <div class="kpi-val" style="font-size:${fs};color:${col}">${value}</div>
+    ${sub?`<div class="kpi-sub">${sub}</div>`:''}
+  </div>`;
+}
+function row(label,value,sub='',bold=false,accent=''){
+  const col=accent||(bold?'#e8f4fd':'#9ab0c4');
+  return `<div class="row">
+    <span class="row-label${bold?' bold':''}">${label}</span>
+    <div>
+      <div class="row-val${bold?' bold':''}" style="${accent?`color:${accent}`:''}"> ${value}</div>
+      ${sub?`<div class="row-sub">${sub}</div>`:''}
+    </div>
+  </div>`;
+}
+
+// ─── TAB SWITCHING ───────────────────────────────────────────────────
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['uebersicht','lage','abschreibung','kosten'].forEach(t=>{
+    document.getElementById(`tab-${t}`).style.display=t===id?'block':'none';
+  });
+}
+
+// ─── SECTION COLLAPSE ────────────────────────────────────────────────
+function toggleSection(header){
+  const body=header.nextElementSibling;
+  const arrow=header.querySelector('.arrow');
+  const collapsed=body.style.display==='none';
+  body.style.display=collapsed?'block':'none';
+  arrow.textContent=collapsed?'▼':'▶';
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────
+makeSlider('sl-kaufpreis','kaufpreis','Kaufpreis',50000,2000000,1000,'€',()=>`→ ${fmtEur(S.kaufpreis/S.wohnflaeche,0)}/m²`);
+makeSlider('sl-wohnflaeche','wohnflaeche','Wohnfläche',20,400,1,'m²',()=>`→ ${fmtEur(S.kaufpreis/S.wohnflaeche,0)}/m²`);
+makeSlider('sl-grunderwerbsteuer','grunderwerbsteuer','Grunderwerbsteuer',3.5,6.5,0.5,'%',()=>'Je nach Bundesland 3,5%–6,5%');
+makeSlider('sl-notar','notarkosten','Notar & Grundbuch',0.5,2.5,0.1,'%');
+makeSlider('sl-makler','maklercourtage','Maklercourtage',0,7.14,0.1,'%');
+makeSlider('sl-eigenkapital','eigenkapital','Eigenkapital',0,600000,5000,'€',()=>`Beleihung: ${fmtDE((1-S.eigenkapital/calc().gesamtInv)*100,1)}%`);
+makeSlider('sl-zinssatz','zinssatz','Sollzinssatz',1,8,0.1,'%');
+makeSlider('sl-tilgung','tilgung','Anfangstilgung',0.5,5,0.25,'%');
+makeSlider('sl-zinsbindung','zinsbindung','Zinsbindung',5,30,5,'Jahre');
+makeSlider('sl-kaltmiete','kaltmiete','Kaltmiete / Monat',200,10000,50,'€',()=>`→ ${fmtEur(S.kaltmiete/S.wohnflaeche,2)}/m²`);
+makeSlider('sl-mietausfall','mietausfallWagnis','Mietausfallwagnis',0,10,0.5,'%');
+makeSlider('sl-mietsteigerung','mietsteigerung','Jährl. Mietsteigerung',0,5,0.1,'%');
+makeSlider('sl-verwaltung','verwaltungskosten','Verwaltungskosten',0,200,5,'€/Mo');
+makeSlider('sl-instandhaltung','instandhaltung','Instandhaltung',0,30,0.5,'€/m²/J',()=>'Peters: ~8–12 €/m²');
+makeSlider('sl-nichtumlegbar','nichtUmlegbar','Nicht umlegbare NK',0,500,10,'€/Mo');
+makeSlider('sl-gebaeudeanteil','gebaeudewertAnteil','Gebäudeanteil am KP',30,95,5,'%',()=>'Grundstück wird nicht abgeschrieben');
+makeSlider('sl-steuersatz','steuersatz','Persönl. Steuersatz',14,45,1,'%');
+makeSlider('sl-wertsteigerung','wertsteigerung','Jährl. Wertsteigerung',0,6,0.1,'%');
+makeSlider('sl-haltedauer','haltedauer','Geplante Haltedauer',5,40,1,'Jahre');
+
+makeToggle('toggle-neubau','isNeubau','Neubau (ab 2023)',()=>{
+  document.getElementById('toggle-qng').style.display=S.isNeubau?'block':'none';
+  if(!S.isNeubau)S.isQNG=false;
+});
+makeToggle('toggle-qng','isQNG','QNG-Siegel → 5% AfA (§7b)');
+
+document.getElementById('plz-input').addEventListener('input',e=>{
+  S.plz=e.target.value.replace(/\D/g,'');render();
+});
+
+render();
+</script>
+
+</body>
+</html>
